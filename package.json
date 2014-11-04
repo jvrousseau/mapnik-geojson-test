@@ -1,0 +1,25 @@
+{
+  "name": "mapnik-geojson-test",
+  "version": "0.0.1",
+  "description": "Attempting to pinpoint an issue with rendering geojson",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jvrousseau/mapnik-geojson-test.git"
+  },
+  "author": "Jordan Rousseau",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jvrousseau/mapnik-geojson-test/issues"
+  },
+  "homepage": "https://github.com/jvrousseau/mapnik-geojson-test",
+  "dependencies": {
+    "abaculus": "^1.0.0",
+    "bluebird": "^2.3.10",
+    "mapnik": "^3.0.5",
+    "sphericalmercator": "^1.0.2"
+  }
+}
