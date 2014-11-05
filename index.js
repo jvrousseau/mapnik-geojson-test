@@ -1,51 +1,36 @@
 var Promise = require('bluebird'),
-    abaculus = Promise.promisify(require('abaculus')),
-    path = require('path'),
     mapnik = require('mapnik'),
     mercator = new(require('sphericalmercator')),
-    path = require('path'),
-    fs = require('fs'),
-    congif_path = path.normalize(__dirname + '/layers.xml');
+    mapnikify = require('geojson-mapnikify'),
+    viewport = require('geo-viewport'),
+    fs = require('fs');
 
-mapnik.register_datasource(path.join(mapnik.settings.paths.input_plugins, 'shape.input'));
-mapnik.register_datasource(path.join(mapnik.settings.paths.input_plugins, 'gdal.input'));
-mapnik.register_datasource(path.join(mapnik.settings.paths.input_plugins, 'ogr.input'));
+mapnik.register_default_input_plugins();
 
-function getGeoJSONImageTile(vtile) {
+function generateGeoJsonImage(options, callback) {
     'use strict';
-    return function (z, x, y, callback) {
-        var map = new mapnik.Map(256, 256),
-            bbox = mercator.bbox(x, y, z, false, 'WGS84');
-        map.load(congif_path, function (err, map) {
+    var map = new mapnik.Map(options.width, options.height),
+        image = new mapnik.Image(map.width, map.height),
+        bbox = viewport.bounds([options.center_lng, options.center_lat], options.zoom, [map.width, map.height]);
+    bbox = mercator.convert(bbox, '900913');
+    mapnikify(options.geojson, false, function (err, xml) {
+        if (err) return cb(err);
+        map.fromString(xml, {
+            strict: true
+        }, function (err, map) {
+            if (err) return cb(err);
+            map.zoomAll();
             map.extent = bbox;
-            vtile.render(map, new mapnik.Image(256, 256), function (err, image) {
-                image.encode('png32', function (error, buffer) {
-                    callback(error, buffer, null);
-                });
+            map.render(image, function (err, image) {
+                if (err) return cb(err);
+                image.encode('png32', function (err, buffer) {
+                    callback(err, buffer);
+                })
             })
         });
-    };
+    });
 }
 
-function generateGeoJsonImage(options) {
-    'use strict';
-    var vtile = new mapnik.VectorTile(0, 0, 0),
-        params;
-    vtile.addGeoJSON(JSON.stringify(options.geojson), "layer-name");
-    params = {
-        zoom: options.zoom,
-        scale: 1,
-        center: {
-            x: options.center_lng,
-            y: options.center_lat,
-            w: options.width,
-            h: options.height
-        },
-        format: options.format,
-        getTile: getGeoJSONImageTile(vtile)
-    };
-    return abaculus(params);
-};
 
 var options = {
     center_lat: 36.166,
@@ -59,7 +44,10 @@ var options = {
         "type": "FeatureCollection",
         "features": [{
             "type": "Feature",
-            "properties": {},
+            "properties": {
+                "stroke": "070707",
+                "fill": "#32CD32"
+            },
             "geometry": {
                 "type": "Polygon",
                 "coordinates": [
@@ -122,9 +110,7 @@ var options = {
     }
 };
 
-generateGeoJsonImage(options).then(function (image) {
-    fs.writeFileSync('image.png', image[0]);
-}).
-catch (function (error) {
-    console.error(error);
+generateGeoJsonImage(options, function (err, image) {
+    if (err) throw err;
+    fs.writeFileSync('image.png', image);
 });

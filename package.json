@@ -17,8 +17,9 @@
   },
   "homepage": "https://github.com/jvrousseau/mapnik-geojson-test",
   "dependencies": {
-    "abaculus": "^1.0.0",
     "bluebird": "^2.3.10",
+    "geo-viewport": "^0.1.1",
+    "geojson-mapnikify": "^0.4.1",
     "mapnik": "^3.0.5",
     "sphericalmercator": "^1.0.2"
   }
